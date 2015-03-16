@@ -4752,6 +4752,27 @@ void t_java_generator::generate_standard_reader(ofstream& out, t_struct* tstruct
   indent_down();
   indent(out) << "}" << endl;
 
+  indent(out) << "if (schemeField.id == org.apache.thrift.protocol.TField.FIELD_ID_UNKNOWN) {" << endl;
+  indent_up();
+  indent(out) << "_Fields fieldDescriptor = _Fields.findByName(schemeField.name);" << endl;
+  indent(out) << "if (fieldDescriptor != null) {" << endl;
+  indent_up();
+  // TODO(ahilss): add map from field name to TField to eliminate extra lookup.
+  indent(out) << "org.apache.thrift.meta_data.FieldMetaData fieldMetadata = metaDataMap.get(fieldDescriptor);" << endl;
+  indent(out) << "schemeField = new org.apache.thrift.protocol.TField(" << endl;
+  indent_up();
+  indent_up();
+  indent(out) << "fieldDescriptor.getFieldName()," << endl;
+  indent(out) << "fieldMetadata.valueMetaData.type," << endl;
+  indent(out) << "fieldDescriptor.getThriftFieldId());" << endl;
+  indent_down();
+  indent_down();
+  indent_down();
+  indent(out) << "}" << endl;
+
+  indent_down();
+  indent(out) << "}" << endl;
+
   // Switch statement on the field we are reading
   indent(out) << "switch (schemeField.id) {" << endl;
 
