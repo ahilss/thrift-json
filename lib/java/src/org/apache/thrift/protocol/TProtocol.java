@@ -147,6 +147,8 @@ public abstract class TProtocol {
 
   public abstract ByteBuffer readBinary() throws TException;
 
+  public void readUnknown() throws TException {}
+
   /**
    * Reset any internal state back to a blank slate. This method only needs to
    * be implemented for stateful protocols.

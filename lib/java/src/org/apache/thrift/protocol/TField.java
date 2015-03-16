@@ -63,4 +63,6 @@ public class TField {
     TField otherField = (TField) obj;
     return type == otherField.type && id == otherField.id;
   }
+
+  public static final short FIELD_ID_UNKNOWN = -1;
 }

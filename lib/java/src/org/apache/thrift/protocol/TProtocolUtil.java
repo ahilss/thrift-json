@@ -140,6 +140,10 @@ public class TProtocolUtil {
         prot.readListEnd();
         break;
 
+      case TType.UNKNOWN:
+        prot.readUnknown();
+        break;
+
       default:
         break;
     }

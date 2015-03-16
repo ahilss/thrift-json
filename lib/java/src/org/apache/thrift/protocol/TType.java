@@ -37,4 +37,5 @@ public final class TType {
   public static final byte SET    = 14;
   public static final byte LIST   = 15;
   public static final byte ENUM   = 16;
+  public static final byte UNKNOWN = 17;
 }
