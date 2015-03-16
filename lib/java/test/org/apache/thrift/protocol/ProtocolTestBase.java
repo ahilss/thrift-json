@@ -360,7 +360,9 @@ public abstract class ProtocolTestBase extends TestCase {
   // Helper methods
   //
 
-  private void internalTestStructField(StructFieldTestCase testCase) throws Exception {
+  // TODO(ahilss): Revert this to private when improved testing support added for
+  // string identifier based protocols.
+  protected void internalTestStructField(StructFieldTestCase testCase) throws Exception {
     TMemoryBuffer buf = new TMemoryBuffer(0);
     TProtocol proto = getFactory().getProtocol(buf);
 
@@ -379,7 +381,9 @@ public abstract class ProtocolTestBase extends TestCase {
     proto.readStructEnd();
   }
 
-  private static abstract class StructFieldTestCase {
+  // TODO(ahilss): Revert this to private when improved testing support added for
+  // string identifier based protocols.
+  protected static abstract class StructFieldTestCase {
     byte type_;
     short id_;
     public StructFieldTestCase(byte type, short id) {

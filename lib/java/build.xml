@@ -354,6 +354,8 @@
       <dependency groupId="javax.servlet" artifactId="servlet-api" version="${servlet.version}" scope="provided"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="${httpclient.version}"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="${httpcore.version}"/>
+      <dependency groupId="com.fasterxml.jackson.core" artifactId="jackson-core" version="${jackson.version}"/>
+      <dependency groupId="com.fasterxml.jackson.core" artifactId="jackson-databind" version="${jackson.version}"/>
     </artifact:pom>
 
     <!-- Generate the pom file -->
