@@ -40,6 +40,20 @@
 	return self;
 }
 
+- (size_t) read:(uint8_t *)buf offset: (size_t) offset length: (size_t) length
+{
+  size_t bytesToRead = MIN([mBuffer length] - mOffset, length);
+
+  [mBuffer getBytes:buf+offset range:NSMakeRange(mOffset, bytesToRead)];
+  mOffset += bytesToRead;
+  // Delete garbage data when at least half of buffer consumed.
+  if (mOffset >= GARBAGE_BUFFER_SIZE && mOffset >= [mBuffer length] / 2) {
+    [mBuffer replaceBytesInRange:NSMakeRange(0, mOffset) withBytes:NULL length:0];
+    mOffset = 0;
+  }
+  return bytesToRead;
+}
+
 - (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
 	if ([mBuffer length] - mOffset < length) {

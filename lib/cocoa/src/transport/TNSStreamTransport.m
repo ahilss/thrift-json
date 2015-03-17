@@ -53,6 +53,23 @@
 }
 
 
+- (size_t) read: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
+{
+  size_t totalBytesRead = 0;
+  BOOL hasMoreData = YES;
+
+  while (totalBytesRead < length && hasMoreData) {
+    ssize_t bytesRead = [self.mInput read: buf+offset+totalBytesRead maxLength: length-totalBytesRead];
+    if (bytesRead <= 0) {
+      hasMoreData = NO;
+    } else {
+      totalBytesRead += (size_t)bytesRead;
+    }
+  }
+  return totalBytesRead;
+}
+
+
 - (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
   size_t totalBytesRead = 0;

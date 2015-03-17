@@ -51,6 +51,24 @@
 }
 
 
+- (size_t) read: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
+{
+  size_t totalBytesRead = 0;
+  BOOL hasMoreData = YES;
+
+  while (totalBytesRead < length && hasMoreData) {
+    NSData *data = [mInputFileHandle readDataOfLength: length-totalBytesRead];
+    if ([data length] == 0) {
+      hasMoreData = NO;
+    } else {
+      [data getBytes: buf+totalBytesRead];
+      totalBytesRead += [data length];
+    }
+  }
+  return totalBytesRead;
+}
+
+
 - (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
   size_t totalBytesRead = 0;

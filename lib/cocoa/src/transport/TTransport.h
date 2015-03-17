@@ -20,6 +20,17 @@
 @protocol TTransport <NSObject>
 
   /**
+   * Read at most length bytes into buf.
+   *
+   * @param buf Buffer to read into
+   * @param offset Index in buffer to start storing bytes at
+   * @param length Maximum number of bytes to read
+   * @return The number of bytes actually read, which will be at most length
+   * @throws TTransportException if there was an error reading data
+   */
+- (size_t) read: (uint8_t *) buf offset: (size_t) offset length: (size_t) length;
+
+  /**
    * Guarantees that all of len bytes are read
    *
    * @param buf Buffer to read into

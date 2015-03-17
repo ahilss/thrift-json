@@ -83,6 +83,41 @@
     [writeBuffer appendBytes:data+offset length:length];
 }
 
+
+- (size_t) bytesLeft
+{
+    return readBuffer != nil ? [readBuffer length] - readOffset : 0;
+}
+
+
+- (size_t) read: (uint8_t *) buf offset: (size_t) offset length: (size_t) length {
+    size_t totalBytesRead = 0;
+    BOOL hasMoreData = YES;
+
+    while (totalBytesRead < length && hasMoreData) {
+        size_t bytesLeft = [self bytesLeft];
+
+        if (bytesLeft == 0) {
+            [self readFrame];
+            readOffset = 0;
+            bytesLeft = [self bytesLeft];
+        }
+
+        if (bytesLeft > 0) {
+            size_t bytesToRead = MIN(bytesLeft, length);
+
+            [readBuffer getBytes:buf+offset+totalBytesRead range:NSMakeRange(readOffset,bytesToRead)];
+            readOffset += bytesToRead;
+            totalBytesRead += bytesToRead;
+        } else {
+            hasMoreData = NO;
+        }
+    }
+
+    return totalBytesRead;
+}
+
+
 - (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
     if (readBuffer == nil) {

@@ -102,6 +102,21 @@
 }
 
 
+- (size_t) read:(uint8_t *)buf offset:(size_t) offset length:(size_t) length
+{
+  size_t bytesToRead = MIN([mResponseData length] - mResponseDataOffset, length);
+
+  NSRange r;
+  r.location = mResponseDataOffset;
+  r.length = bytesToRead;
+
+  [mResponseData getBytes:buf+offset range: r];
+  mResponseDataOffset += length;
+
+  return bytesToRead;
+}
+
+
 - (size_t) readAll: (uint8_t *) buf offset: (size_t) offset length: (size_t) length
 {
   NSRange r;
