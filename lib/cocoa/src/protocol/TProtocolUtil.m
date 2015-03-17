@@ -96,6 +96,9 @@
       [protocol readListEnd];
     }
       break;
+    case TType_UNKNOWN:
+      [protocol readUnknown];
+      break;
     default:
       return;
   }

@@ -382,6 +382,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 
 - (void) readListEnd {}
 
+- (void) readUnknown {}
+
 
 - (void) writeByte: (uint8_t) value
 {

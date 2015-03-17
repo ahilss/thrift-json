@@ -29,7 +29,7 @@ enum {
   TMessageType_ONEWAY = 4
 };
 
-enum {
+typedef enum {
   TType_STOP   = 0,
   TType_VOID   = 1,
   TType_BOOL   = 2,
@@ -42,8 +42,22 @@ enum {
   TType_STRUCT = 12,
   TType_MAP    = 13,
   TType_SET    = 14,
-  TType_LIST   = 15
-};
+  TType_LIST   = 15,
+  TType_UNKNOWN = 16,
+} TType;
+
+extern const int kFieldIDUnknown;
+
+@interface TFieldDescriptor : NSObject {
+  TType _type;
+  int _fieldID;
+}
+
+@property (nonatomic) TType type;
+@property (nonatomic) int fieldID;
+
+- (id)initWithType:(TType)type fieldID:(int)fieldID;
+@end
 
 
 @protocol TProtocol <NSObject>
@@ -94,6 +108,8 @@ enum {
                                       size: (int *) size;
 - (void) readListEnd;
 
+- (void) readUnknown;
+
 
 - (void) writeMessageBeginWithName: (NSString *) name
                               type: (int) messageType
@@ -142,7 +158,6 @@ enum {
                                   size: (int) size;
 
 - (void) writeListEnd;
-
 
 @end
 
