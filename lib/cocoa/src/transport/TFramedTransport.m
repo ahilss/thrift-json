@@ -33,11 +33,15 @@
 
 - (id) initWithTransport:(id <TTransport>)transport
 {
-    mTransport = [transport retain_stub];
-    readBuffer = nil;
-    readOffset = 0;
-    writeBuffer = [[NSMutableData alloc] initWithCapacity:INIT_FRAME_SIZE];
-    [writeBuffer appendBytes:dummy_header length:HEADER_SIZE];
+    self = [super init];
+
+    if (self) {
+        mTransport = [transport retain_stub];
+        readBuffer = nil;
+        readOffset = 0;
+        writeBuffer = [[NSMutableData alloc] initWithCapacity:INIT_FRAME_SIZE];
+        [writeBuffer appendBytes:dummy_header length:HEADER_SIZE];
+    }
     return self;
 }
 

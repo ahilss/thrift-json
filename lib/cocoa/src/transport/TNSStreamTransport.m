@@ -28,8 +28,10 @@
               outputStream: (NSOutputStream *) output
 {
   self = [super init];
-  self.mInput = [input retain_stub];
-  self.mOutput = [output retain_stub];
+  if (self) {
+    _mInput = [input retain_stub];
+    _mOutput = [output retain_stub];
+  }
   return self;
 }
 
@@ -45,8 +47,8 @@
 
 - (void) dealloc
 {
-  [self.mInput release_stub];
-  [self.mOutput release_stub];
+  [_mInput release_stub];
+  [_mOutput release_stub];
   [super dealloc_stub];
 }
 
