@@ -105,6 +105,8 @@ public:
   void generate_cocoa_struct_encode_with_coder_method(ofstream& out,
                                                       t_struct* tstruct,
                                                       bool is_exception);
+  void generate_cocoa_struct_copy_with_zone_method(ofstream &out,
+                                                   t_struct* tstruct);
   void generate_cocoa_struct_hash_method(ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_is_equal_method(ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_field_accessor_declarations(std::ofstream& out,
@@ -113,6 +115,8 @@ public:
   void generate_cocoa_struct_field_accessor_implementations(std::ofstream& out,
                                                             t_struct* tstruct,
                                                             bool is_exception);
+  void generate_cocoa_struct_field_descriptor(std::ofstream& out,
+                                              t_struct* tstruct);
   void generate_cocoa_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_writer(std::ofstream& out, t_struct* tstruct);
@@ -426,7 +430,7 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
   } else {
     out << "NSObject ";
   }
-  out << "<TBase, NSCoding> ";
+  out << "<TBase, NSCoding, NSCopying> ";
 
   scope_up(out);
 
@@ -472,6 +476,9 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
   }
   out << endl;
 
+  out << "- (id) copyWithZone:(NSZone *) zone;" << endl;
+  out << endl;
+
   // read and write
   out << "- (void) read: (id <TProtocol>) inProtocol;" << endl;
   out << "- (void) write: (id <TProtocol>) outProtocol;" << endl;
@@ -482,6 +489,9 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream& out,
 
   // getters and setters
   generate_cocoa_struct_field_accessor_declarations(out, tstruct, is_exception);
+
+  out << "+ (TFieldDescriptor *) fieldDescriptorForFieldName: (NSString*) fieldName;" << endl;
+  out << endl;
 
   out << "@end" << endl << endl;
 }
@@ -663,6 +673,39 @@ void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream&
 }
 
 /**
+ * Generate the copyWithZone method for this struct
+ */
+void t_cocoa_generator::generate_cocoa_struct_copy_with_zone_method(ofstream &out,
+                                                                    t_struct* tstruct)
+{
+  const vector<t_field*>& members = tstruct->get_members();
+
+  out << "- (id) copyWithZone:(NSZone *) zone" << endl;
+  scope_up(out);
+  out << indent() << tstruct->get_name() << " *newObj = [[[self class] allocWithZone:zone] init];" << endl;
+
+  if (!members.empty()) {
+    vector<t_field*>::const_iterator m_iter;
+
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      const string& name = (*m_iter)->get_name();
+      t_type* t = get_true_type((*m_iter)->get_type());
+
+      if (type_can_be_null(t)) {
+        out << indent() << "newObj->__" << name << " = [__" << name << " copyWithZone:zone];" << endl;
+      } else {
+        out << indent() << "newObj->__" << name << " = __" << name << ";" << endl;
+      }
+      out << indent() << "newObj->__" << name << "_isset = __" << name << "_isset; " << endl;
+    }
+  }
+
+  out << indent() << "return newObj;" << endl;
+  scope_down(out);
+  out << endl;
+}
+
+/**
  * Generate the hash method for this struct
  */
 void t_cocoa_generator::generate_cocoa_struct_hash_method(ofstream& out, t_struct* tstruct) {
@@ -833,6 +876,8 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
   generate_cocoa_struct_hash_method(out, tstruct);
   generate_cocoa_struct_is_equal_method(out, tstruct);
 
+  generate_cocoa_struct_copy_with_zone_method(out, tstruct);
+
   // dealloc
   if (!members.empty()) {
     out << "- (void) dealloc" << endl;
@@ -860,8 +905,49 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream& out,
   }
   generate_cocoa_struct_validator(out, tstruct);
   generate_cocoa_struct_description(out, tstruct);
+  generate_cocoa_struct_field_descriptor(out, tstruct);
 
   out << "@end" << endl << endl;
+}
+
+/**
+ * Generates a dictionary from field name to field descriptor.
+ */
+void t_cocoa_generator::generate_cocoa_struct_field_descriptor(std::ofstream& out, t_struct* tstruct) {
+  out << "+ (TFieldDescriptor *) fieldDescriptorForFieldName: (NSString*) fieldName {" << endl;
+  indent_up();
+  out << indent() << "static NSDictionary *fieldDescriptorMap = nil;" << endl;
+  out << endl;
+
+  out << indent() << "if (fieldDescriptorMap == nil) {" << endl;
+  indent_up();
+  out << indent() << "fieldDescriptorMap = [[NSDictionary alloc] initWithObjectsAndKeys:" << endl;
+
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  indent_up();
+  indent_up();
+
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    const t_field* field = *f_iter;
+
+    out << indent() << "[[TFieldDescriptor alloc]" <<
+      " initWithType:" << type_to_enum(field->get_type()) <<
+      " fieldID:" << field->get_key() << "]" <<
+      ", @\"" << field->get_name() << "\", " << endl;
+  }
+  out << indent() << "nil];" << endl;
+
+  indent_down();
+  indent_down();
+
+  scope_down(out);
+
+  out << endl;
+  out << indent() << "return [fieldDescriptorMap objectForKey:fieldName];" << endl;
+
+  scope_down(out);
 }
 
 /**
@@ -899,6 +985,20 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out, t_struct* ts
   indent(out) << "break;" << endl;
   indent_down();
   indent(out) << "}" << endl;
+
+  indent(out) << "if (fieldID == kFieldIDUnknown) {" << endl;
+  indent_up();
+  indent(out) << "TFieldDescriptor *fieldDescriptor = [" <<
+    cocoa_prefix_ << tstruct->get_name() <<
+    " fieldDescriptorForFieldName:fieldName];" << endl;
+
+  indent(out) << "if (fieldDescriptor != nil) {" << endl;
+  indent_up();
+  indent(out) << "fieldID = fieldDescriptor.fieldID;" << endl;
+  indent(out) << "fieldType = fieldDescriptor.type;" << endl;
+  scope_down(out);
+  scope_down(out);
+  out << endl;
 
   // Switch statement on the field we are reading
   indent(out) << "switch (fieldID)" << endl;
@@ -2028,15 +2128,15 @@ void t_cocoa_generator::generate_serialize_container(ofstream& out,
   if (ttype->is_map()) {
     indent(out) << "[outProtocol writeMapBeginWithKeyType: "
                 << type_to_enum(((t_map*)ttype)->get_key_type())
-                << " valueType: " << type_to_enum(((t_map*)ttype)->get_val_type()) << " size: ["
+                << " valueType: " << type_to_enum(((t_map*)ttype)->get_val_type()) << " size: (int) ["
                 << fieldName << " count]];" << endl;
   } else if (ttype->is_set()) {
     indent(out) << "[outProtocol writeSetBeginWithElementType: "
-                << type_to_enum(((t_set*)ttype)->get_elem_type()) << " size: [" << fieldName
+                << type_to_enum(((t_set*)ttype)->get_elem_type()) << " size: (int) [" << fieldName
                 << " count]];" << endl;
   } else if (ttype->is_list()) {
     indent(out) << "[outProtocol writeListBeginWithElementType: "
-                << type_to_enum(((t_list*)ttype)->get_elem_type()) << " size: [" << fieldName
+                << type_to_enum(((t_list*)ttype)->get_elem_type()) << " size: (int) [" << fieldName
                 << " count]];" << endl;
   }
 
