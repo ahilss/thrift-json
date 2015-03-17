@@ -18,3 +18,9 @@
  */
 
 #define ThriftVersion @"1.0.0-dev"
+
+#ifdef DEBUG
+#define DLog(...) NSLog(@"%s %@", __PRETTY_FUNCTION__, [NSString stringWithFormat:__VA_ARGS__])
+#else
+#define DLog(...)
+#endif
